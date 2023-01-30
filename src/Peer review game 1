@@ -1,0 +1,82 @@
+import pygame
+from random import randint
+ 
+ 
+class The_last_exercise:
+    def __init__(self):
+        pygame.init()
+ 
+        self.window=pygame.display.set_mode((1280, 480))
+        pygame.display.set_caption("The last programming exercise")
+        clock=pygame.time.Clock()
+ 
+        self.robot=pygame.image.load("robot.png")
+        self.monster=pygame.image.load("monster.png")
+        self.coin=pygame.image.load("coin.png")
+ 
+        for n in range(0,400):
+            self.coins=[
+                #not: pygame.Rect(100,200,23,23),
+                pygame.Rect(200,250,23,23),
+                pygame.Rect(400,250,23,23)
+                ]
+        score_count=0
+ 
+        self.monsters=[
+            pygame.Rect(450,250,50,70)
+            ]
+        
+        self.robot_height=86
+        self.robot_width=50
+        self.lauta=pygame.Rect(100,300, 430, 50) 
+        x=300
+        y=250
+   
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        x-=20
+                    if event.key == pygame.K_RIGHT:
+                        x+=20
+                if event.type == pygame.QUIT:
+                    exit()
+            
+            #collect coins
+            player_lauta= pygame.Rect(x,y,self.robot_height,self.robot_width)
+            for coin in self.coins:
+                if coin.colliderect(player_lauta):
+                    self.coins.remove(coin)
+                    score_count+=1
+ 
+            #meeting a monster
+            for monster in self.monsters:
+                player_lauta= pygame.Rect(x,y,self.robot_height,self.robot_width-40)
+                if monster.colliderect(player_lauta):
+                    self.monsters.remove(monster)
+                    score_count-=1
+                    x=300
+                    y=250
+                    
+ 
+            self.window.fill((80,80,80))
+            game_font = pygame.font.SysFont("Arial", 24)
+            text_score_count = game_font.render(f"Robot can collect coin by moving to the left and to the right.  Score: {score_count}", True, (0, 230, 0))
+ 
+            self.window.blit(text_score_count, (20, 50))
+            pygame.draw.rect(self.window, (0,100,0), self.lauta)
+ 
+            for coin in self.coins:
+                self.window.blit(self.coin, (coin.x, coin.y))
+ 
+            for monster in self.monsters:
+                self.window.blit(self.monster, (monster.x, monster.y))
+ 
+            self.window.blit(self.robot, (x,(250)))
+            pygame.display.flip()
+            clock.tick(30)
+ 
+ 
+if __name__ == "__main__":
+    The_last_exercise()
+ 

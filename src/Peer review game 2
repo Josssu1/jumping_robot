@@ -1,0 +1,194 @@
+from tkinter.font import families
+import pygame
+import time
+ 
+class RobotSurvivor:
+    
+    def __init__(self):
+        pygame.init()
+        
+        self.clock = pygame.time.Clock()
+        self.load_PNGs()
+        self.new_game()
+ 
+        self.map_height = len(self.game_map)
+        self.map_width = len(self.game_map[0])
+        self.image_scale = self.game_images[0].get_width()
+        self.just_started = True
+        self.sanctuary = (0, 11)
+ 
+        game_height = self.image_scale * self.map_height
+        game_width = self.image_scale * self.map_width
+        self.game_window = pygame.display.set_mode((game_width, game_height + self.image_scale))
+ 
+        self.fontti = pygame.font.SysFont("Arial", 24)
+ 
+        pygame.display.set_caption("Robot Survivor")
+ 
+        self.game_loop()
+ 
+    def load_PNGs(self):
+        self.game_images = []
+        for nimi in ["lattia", "seina", "door", "robo", "kohderobo", "skull"]:
+            self.game_images.append(pygame.image.load(nimi + ".png"))
+        self.monster_width = self.game_images[-1].get_width()
+        self.monster_height = self.game_images[-1].get_height()
+ 
+    def new_game(self):
+        self.game_map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1],
+                       [1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+        self.game_over = False
+        self.game_won = False
+        self.release_the_kraken()
+ 
+ 
+    def release_the_kraken(self):
+        self.monsters = []
+        self.monsters.append({"x": 1, "y": 1, "dir_right": True, "dir_down": True, "velocity_hor": 1, "velocity_ver": 1})
+        self.monsters.append({"x": 15, "y": 1, "dir_right": True, "dir_down": True, "velocity_hor": 1, "velocity_ver": 2})
+        #print(self.monsters)
+ 
+    def game_loop(self):
+        while True:
+            self.move_monsters()
+            self.handle_events()
+            self.draw_game()
+ 
+    def move_monsters(self):
+        if self.game_over or self.game_won:
+            return 
+        for m in self.monsters:
+            self.game_map[m["y"]][m["x"]] = 0
+            if m["dir_right"]:
+                if m["x"] >= self.map_width-2*m["velocity_hor"]:
+                    m["velocity_hor"] *= -1
+                    m["dir_right"] = False
+            else:
+                if m["x"] <= 1:
+                    m["velocity_hor"] *= -1
+                    m["dir_right"] = True
+            if m["dir_down"]:
+                if m["y"] >= (self.map_height-1) -m["velocity_ver"]:
+                    m["velocity_ver"] *= -1
+                    m["dir_down"] = False
+            else:
+                if m["y"] <= 1:
+                    m["velocity_ver"] *= -1
+                    m["dir_down"] = True
+ 
+            m["x"] += m["velocity_hor"]
+            m["y"] += m["velocity_ver"]    
+            #print(m["y"], m["x"], self.map_height, self.map_width)
+ 
+            #print(self.game_map[m["y"]][m["x"]])
+            if self.game_map[m["y"]][m["x"]] == 3:
+                #print(self.game_map)
+                self.game_map[m["y"]][m["x"]] = 5
+                self.game_over = True
+            else:
+                self.game_map[m["y"]][m["x"]] = 4
+        self.clock.tick(2)
+    
+ 
+    def handle_events(self):
+        for game_event in pygame.event.get():
+            if game_event.type == pygame.KEYDOWN:
+                if not self.game_over and not self.game_won: 
+                    if game_event.key == pygame.K_LEFT:
+                        self.move_robot(0, -1)
+                    if game_event.key == pygame.K_RIGHT:
+                        self.move_robot(0, 1)
+                    if game_event.key == pygame.K_UP:
+                        self.move_robot(-1, 0)
+                    if game_event.key == pygame.K_DOWN:
+                        self.move_robot(1, 0)
+                if game_event.key == pygame.K_F2:
+                    self.new_game()
+                    self.initial_credits()
+                if game_event.key == pygame.K_ESCAPE:
+                    exit()
+            if game_event.type == pygame.QUIT:
+                exit()
+ 
+    def initial_credits(self):
+        teksti = self.fontti.render("Evade the evil red-ringed robots and reach the blue door of safety!", True, (255, 0, 0))
+        teksti_x = round(self.image_scale * self.map_width / 2 - teksti.get_width() / 2)
+        teksti_y = round(self.image_scale * self.map_height / 2 - teksti.get_height() / 2)
+        pygame.draw.rect(self.game_window, (0, 0, 0), (teksti_x, teksti_y, teksti.get_width(), teksti.get_height()))
+        self.game_window.blit(teksti, (teksti_x, teksti_y))
+ 
+        teksti = self.fontti.render("Use arrow keys to move.", True, (255, 0, 0))
+        teksti_y += (2 * teksti.get_height())
+        pygame.draw.rect(self.game_window, (0, 0, 0), (teksti_x, teksti_y, teksti.get_width(), teksti.get_height()))
+        self.game_window.blit(teksti, (teksti_x, teksti_y))
+ 
+    def move_robot(self, liike_y, liike_x):
+        robon_vanha_y, robon_vanha_x = self.etsi_robo()
+        robon_uusi_y = robon_vanha_y + liike_y
+        robon_uusi_x = robon_vanha_x + liike_x
+ 
+        if self.game_map[robon_uusi_y][robon_uusi_x] == 1:
+            return
+ 
+        if (robon_uusi_y, robon_uusi_x) == self.sanctuary:
+            self.game_won = True
+        self.game_map[robon_vanha_y][robon_vanha_x] = 0
+        self.game_map[robon_uusi_y][robon_uusi_x] = 3
+ 
+    def etsi_robo(self):
+        for y in range(self.map_height):
+            for x in range(self.map_width):
+                if self.game_map[y][x] == 3:
+                    return (y, x)
+ 
+    def draw_game(self):
+        self.game_window.fill((0, 0, 0))
+ 
+        if self.just_started:
+            self.just_started = False
+            self.initial_credits()
+            pygame.display.flip()
+            time.sleep(3)
+ 
+        for y in range(self.map_height):
+            for x in range(self.map_width):
+                ruutu = self.game_map[y][x]
+                self.game_window.blit(self.game_images[ruutu], (x * self.image_scale, y * self.image_scale))
+ 
+        teksti = self.fontti.render("F2 = uusi peli", True, (255, 0, 0))
+        self.game_window.blit(teksti, (200, self.map_height * self.image_scale + 10))
+ 
+        teksti = self.fontti.render("Esc = sulje peli", True, (255, 0, 0))
+        self.game_window.blit(teksti, (400, self.map_height * self.image_scale + 10))
+ 
+        if self.game_over:
+            teksti = self.fontti.render("You lost!", True, (255, 0, 0))
+            teksti_x = self.image_scale * self.map_width / 2 - teksti.get_width() / 2
+            teksti_y = self.image_scale * self.map_height / 2 - teksti.get_height() / 2
+            pygame.draw.rect(self.game_window, (0, 0, 0), (teksti_x, teksti_y, teksti.get_width(), teksti.get_height()))
+            self.game_window.blit(teksti, (teksti_x, teksti_y))
+        elif self.game_won:
+            teksti = self.fontti.render("You've reached the safety and won the game!", True, (255, 0, 0))
+            teksti_x = self.image_scale * self.map_width / 2 - teksti.get_width() / 2
+            teksti_y = self.image_scale * self.map_height / 2 - teksti.get_height() / 2
+            pygame.draw.rect(self.game_window, (0, 0, 0), (teksti_x, teksti_y, teksti.get_width(), teksti.get_height()))
+            self.game_window.blit(teksti, (teksti_x, teksti_y))
+ 
+        pygame.display.flip()
+ 
+ 
+if __name__ == "__main__":
+    RobotSurvivor()
